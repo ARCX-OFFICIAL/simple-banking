@@ -45,6 +45,9 @@ new_password_entry.grid(row=1, column=1)
 def register():
     new_username = new_username_entry.get()
     new_password = new_password_entry.get()
+    if len(new_username) < 3 or len(new_password) < 6:
+        tk.Label(register_frame, text="Username must be at least 3 characters and password at least 6 characters", fg="red").grid(row=2, columnspan=2)
+        return
     # Serialize public key to PEM format
     public_key_pem = client_public_key.public_bytes(
         encoding=serialization.Encoding.PEM,
@@ -61,6 +64,7 @@ def register():
     result = response.json()
     if result["status"] == "Success":
         tk.Label(register_frame, text="Registration Successful!", fg="green").grid(row=2, columnspan=2)
+        register_frame.pack_forget()
     else:
         tk.Label(register_frame, text="Registration Failed", fg="red").grid(row=2, columnspan=2)
 
@@ -86,6 +90,8 @@ def login():
     
     if result["status"] == "Success":
         login_frame.pack_forget()
+        register_frame.pack_forget()
+        tk.Label(root, text="Login Successful!", fg="green").pack()
         open_dashboard(username)
     else:
         tk.Label(login_frame, text="Login Failed", fg="red").grid(row=2, columnspan=2)
@@ -126,7 +132,11 @@ def open_dashboard(username):
             "signature": signature.hex()
         })
         
-        transfer_result.config(text=response.json()["message"])
+        message = response.json()["message"]
+        if message == "Transaction successful!":
+            transfer_result.config(text=message, fg="green")
+        else:
+            transfer_result.config(text=message, fg="red")
         fetch_balance()  # Update balance after transfer
 
     tk.Label(dashboard_frame, text="Transfer To:").pack()
